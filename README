@@ -1,0 +1,21 @@
+aws_init
+
+Purpose: For automatically starting and configuring AWS instances, using
+chef-solo to install arbitrary software packages.
+
+Simple use case:
+$ cd aws_init
+>>> import startami
+>>> image = 'ubuntu1004x64'
+>>> instancetype = 'm1.large'
+>>> accesskey = 'blahblahblahmyaccesskey'
+>>> secretkey = 'blahblahblahmysecretkey'
+>>> pkname = 'thenameofmyprivatekey'
+>>> softwareList = ['zsh', 'screen', 'git']
+>>>
+>>> startami.prepareInstance(image, instancetype, accesskey, secretkey,
+... pkname, softwareList)
+
+after keeping your fingers crossed and waiting an absurdly long time, the
+method should report back the ('username', 'dnsname') of the server that you
+can use to log into. The software you listed will be automatically installed.
