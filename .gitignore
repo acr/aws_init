@@ -1,0 +1,4 @@
+*.pyc
+quixote_stuff/Quixote-2.6/
+quixote_stuff/distribute-0.6.10.tar.gz
+quixote_stuff/env/

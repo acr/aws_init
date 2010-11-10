@@ -1,0 +1,3 @@
+-move IMAGE data/functions out of startami.py and to own file/module
+-test starting up 100 (500?) instances at once and see how often they fail
+and what happens when they do. put these fixes into the startami function
