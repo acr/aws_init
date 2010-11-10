@@ -5,6 +5,7 @@ chef-solo to install arbitrary software packages.
 
 Simple use case:
 $ cd aws_init
+$ python
 >>> import startami
 >>> image = 'ubuntu1004x64'
 >>> instancetype = 'm1.large'
