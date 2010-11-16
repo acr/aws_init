@@ -140,6 +140,9 @@ def installSoftware(dnsname, softwareList):
 
     ssh.close()
 
+
+# [AN] change to take another parameter that is just the URL of the pipeline
+# script that gets executed when everything has been installed
 def prepareInstance(image, instancetype, accesskey, secretkey, pkname,
                     softwareList):
     """
@@ -169,8 +172,23 @@ def startami(image, instancetype, accesskey, secretkey, pkname):
     reservation = image.run(instance_type=instancetype, key_name=pkname)
     instance = reservation.instances[0]
 
-    # [AN] this will fall into an infinite loop if the image doesn't start
-    while(instance.update() != u'running'):
-        time.sleep(1)
-
+    waitForInstanceToRun(instance)
     return str(instance.dns_name)
+
+# [AN] add a timeout here (3min?) so it fails if it doesn't start in that
+# time
+def waitForInstanceToRun(instance):
+    """
+    Given an instance that has been requested to start, this method waits
+    until it actually has been started
+    """
+    while True:
+        try:
+            instance.update()
+            break
+        except EC2ResponseError:
+            continue
+
+    # [AN] this will fall into an infinite loop if the image doesn't start
+    while instance.update() != u'running':
+        time.sleep(1)
