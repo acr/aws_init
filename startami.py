@@ -17,7 +17,7 @@ USERNAME = 'root'
 NODEJS_PATH = '/etc/chef/node.js'
 CHEF_REPOSITORY_LOCATION = 'http://lyorn.idyll.org/~nolleyal/chef/' \
     'chef-solo.tar.gz'
-CONNECTION_RETRIES = 10
+NUM_RETRY_ATTEMPTS = 10
 SSH_PORT = 22
 
 def get_available_images():
@@ -98,14 +98,14 @@ def installSoftware(dnsname, softwareList):
     privkey = paramiko.DSSKey.from_private_key_file(PRIVATE_KEY_FILE)
 
     # Try connecting to port 22 until it is available
-    for trial in range(0, CONNECTION_RETRIES):
+    for trial in range(0, NUM_RETRY_ATTEMPTS):
         print "connection try %d" % trial
         if is_port_open(dnsname, SSH_PORT):
             break
-        elif trial == CONNECTION_RETRIES-1:
+        elif trial == NUM_RETRY_ATTEMPTS-1:
             raise RuntimeError("Failed to connect to port %d on %s after " \
                                    "%s attempts" % (SSH_PORT, dnsname,
-                                                    CONNECTION_RETRIES))
+                                                    NUM_RETRY_ATTEMPTS))
         else:
             time.sleep(1)
 
@@ -144,20 +144,24 @@ def installSoftware(dnsname, softwareList):
 # [AN] change to take another parameter that is just the URL of the pipeline
 # script that gets executed when everything has been installed
 def prepareInstance(image, instancetype, accesskey, secretkey, pkname,
-                    softwareList):
+                    softwareList, pipelineUrl):
     """
-    Launches an AMI instance using the supplied crendentials and installs
-    the listed software. On success, returns:
-    ((username, dnsname))
+    Launches an AMI instance using the supplied credentials, installs
+    the webserver. As a final step, the webserver is started and given
+    the list of software to install so the installation process can
+    be seen on a website
     """
     # Start up the AMI
     dnsName = startami(image, instancetype, accesskey, secretkey, pkname)
+
+    # SSH onto the machine and run the webserver
 
     # SSH onto the machine and run the chef-solo
     installSoftware(dnsName, softwareList)
 
     return ((get_image_username(image), dnsName))
 
+# [AN] this needs to be amended to call the method on the server
 def startami(image, instancetype, accesskey, secretkey, pkname):
     """
     Launches an AMI instance using the supplied credentials. On success,
@@ -173,10 +177,10 @@ def startami(image, instancetype, accesskey, secretkey, pkname):
     instance = reservation.instances[0]
 
     waitForInstanceToRun(instance)
+
+    # [AN] call script instanceStartup.py
     return str(instance.dns_name)
 
-# [AN] add a timeout here (3min?) so it fails if it doesn't start in that
-# time
 def waitForInstanceToRun(instance):
     """
     Given an instance that has been requested to start, this method waits
@@ -189,6 +193,12 @@ def waitForInstanceToRun(instance):
         except EC2ResponseError:
             continue
 
-    # [AN] this will fall into an infinite loop if the image doesn't start
-    while instance.update() != u'running':
-        time.sleep(1)
+    for trial in range(0, NUM_RETRY_ATTEMPTS):
+        if instance.update() == u'running':
+            break
+        elif trial == NUM_RETRY_ATTEMPTS-1:
+            raise RuntimeError("AWS instance failed to startup after %d " \
+                                   "re-checks" % NUM_RETRY_ATTEMPTS)
+        else:
+            time.sleep(1)
+        
