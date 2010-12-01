@@ -18,6 +18,7 @@ NODEJS_PATH = '/etc/chef/node.js'
 CHEF_REPOSITORY_LOCATION = 'http://lyorn.idyll.org/~nolleyal/chef/' \
     'chef-solo.tar.gz'
 NUM_RETRY_ATTEMPTS = 10
+INIT_SECONDS = 30.0 #3.0 * 60.0
 SSH_PORT = 22
 
 def get_available_images():
@@ -193,12 +194,11 @@ def waitForInstanceToRun(instance):
         except EC2ResponseError:
             continue
 
-    for trial in range(0, NUM_RETRY_ATTEMPTS):
+    before = time.time()
+    while True:
         if instance.update() == u'running':
             break
-        elif trial == NUM_RETRY_ATTEMPTS-1:
-            raise RuntimeError("AWS instance failed to startup after %d " \
-                                   "re-checks" % NUM_RETRY_ATTEMPTS)
-        else:
-            time.sleep(1)
-        
+        elif time.time() - before > INIT_SECONDS:
+            raise RuntimeError("AWS instance failed to start after %f " \
+                                   "seconds" % INIT_SECONDS)
+        time.sleep(1)
