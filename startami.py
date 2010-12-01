@@ -12,7 +12,7 @@ AVAILABLE_IMAGES = {
                            'cc1.4xlarge'],
                       'username': 'ubuntu'
                       }}
-PRIVATE_KEY_FILE = os.path.join('auth', 'id_dsa')
+PRIVATE_KEY_FILE = os.path.join(os.path.dirname(__file__), 'auth', 'id_dsa')
 USERNAME = 'root'
 NODEJS_PATH = '/etc/chef/node.js'
 CHEF_REPOSITORY_LOCATION = 'http://lyorn.idyll.org/~nolleyal/chef/' \
