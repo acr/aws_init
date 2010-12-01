@@ -3,6 +3,7 @@ import time
 import paramiko
 import os
 import socket
+import ssh_tools
 
 # [AN] move these data and related functions to their own file/module
 AVAILABLE_IMAGES = {
@@ -154,8 +155,15 @@ def prepareInstance(image, instancetype, accesskey, secretkey, pkname,
     """
     # Start up the AMI
     dnsName = startami(image, instancetype, accesskey, secretkey, pkname)
+    username = get_image_username(image)
 
-    # SSH onto the machine and run the webserver
+    # Open an SSH connection onto the machine
+    instance_ssh_session = ssh_tools.sshConnection(dnsName, SSH_PORT,
+                                                   username, PRIVATE_KEY_FILE)
+    
+    # Write a temporary file containing the NODE_JS data to the NODE_JS file
+
+    # Run the script in a screen and exit
 
     # SSH onto the machine and run the chef-solo
     installSoftware(dnsName, softwareList)

@@ -72,6 +72,27 @@ class sshConnection(object):
             for line in stderr.readlines():
                 print line.strip()
 
+    def _getTransport():
+        """
+        Returns an opened transport connection
+        """
+        transport = paramiko.Transport((self._serveraddress, self._port))
+        transport.connect(username=self._username, pkey=self._privkey)
+
+        return transport
+
+    def writeFile(self, fileData, remotefilename):
+        """
+        Writes given string contents to a remote file
+        """
+        transport = _getTransport()
+        sftp = paramiko.SFTPClient.from_transport(transport)
+        sfile = sftp.file(remotefilename, 'w')
+        sfile.write(fileData)
+        sfile.close()
+        sftp.close()
+        transport.close()
+
     def sendFile(self, localfilename, remotefilename):
         """
         Sends a file from the local machine to the remote machine over the
@@ -80,8 +101,7 @@ class sshConnection(object):
         if not os.path.isfile(localfilename):
             return False
 
-        transport = paramiko.Transport((self._serveraddress, self._port))
-        transport.connect(username=self._username, pkey=self._privkey)
+        transport = _getTransport()
         sftp = paramiko.SFTPClient.from_transport(transport)
         sftp.put(localfilename, remotefilename)
         sftp.close()
