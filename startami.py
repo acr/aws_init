@@ -19,7 +19,7 @@ NODEJS_PATH = '/etc/chef/node.js'
 CHEF_REPOSITORY_LOCATION = 'http://lyorn.idyll.org/~nolleyal/chef/' \
     'chef-solo.tar.gz'
 NUM_RETRY_ATTEMPTS = 10
-INIT_SECONDS = 3.0 * 60.0
+INIT_SECONDS = 5.0 * 60.0
 SSH_PORT = 22
 
 def get_available_images():
@@ -144,7 +144,6 @@ def installSoftware(dnsname, softwareList):
         print line
 
     ssh.close()
-
 
 def startAndRun(image, instancetype, accesskey, secretkey, pkname,
                 commandToExecute):
