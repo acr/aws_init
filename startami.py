@@ -158,8 +158,8 @@ def prepareInstance(image, instancetype, accesskey, secretkey, pkname,
     username = get_image_username(image)
 
     # Open an SSH connection onto the machine
-    instance_ssh_session = ssh_tools.sshConnection(dnsName, SSH_PORT,
-                                                   username, PRIVATE_KEY_FILE)
+#    instance_ssh_session = ssh_tools.sshConnection(dnsName, SSH_PORT,
+#                                                   username, PRIVATE_KEY_FILE)
     
     # Write a temporary file containing the NODE_JS data to the NODE_JS file
 
