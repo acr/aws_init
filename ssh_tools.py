@@ -57,9 +57,9 @@ class sshConnection(object):
     def __del__(self):
         self._ssh.close()
 
-    def remoteExecute(self, command, verbose=False):
+    def executeCommand(self, command, verbose=False):
         """
-        Executes the command over the SSH connection
+        Executes a command over the SSH connection
         """
         stdin, stdout, stderr = self._ssh.exec_command(command)
 
@@ -72,7 +72,14 @@ class sshConnection(object):
             for line in stderr.readlines():
                 print line.strip()
 
-    def _getTransport():
+    def executeCommandInScreen(self, command):
+        """
+        Executes a command in a screen
+        """
+        command = "screen -d -m %s" % command
+        self.executeCommand(command, False)
+
+    def _getTransport(self):
         """
         Returns an opened transport connection
         """
@@ -85,7 +92,7 @@ class sshConnection(object):
         """
         Writes given string contents to a remote file
         """
-        transport = _getTransport()
+        transport = self._getTransport()
         sftp = paramiko.SFTPClient.from_transport(transport)
         sfile = sftp.file(remotefilename, 'w')
         sfile.write(fileData)
@@ -101,7 +108,7 @@ class sshConnection(object):
         if not os.path.isfile(localfilename):
             return False
 
-        transport = _getTransport()
+        transport = self._getTransport()
         sftp = paramiko.SFTPClient.from_transport(transport)
         sftp.put(localfilename, remotefilename)
         sftp.close()

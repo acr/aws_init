@@ -67,6 +67,7 @@ def is_valid_instance_type(image, instancetype):
 
     return True
 
+# [AN] this is depricated
 def generateRunList(softwareList):
     """
     Generates a string that can be used as a run list to install the software
@@ -78,6 +79,7 @@ def generateRunList(softwareList):
 
     return '{ "run_list": [ %s ] }' % ', '.join(swEntrys)
 
+# [AN] this is depricated
 def is_port_open(host, port):
     """
     Returns True if the port on the given host is open, False if it is not
@@ -90,6 +92,7 @@ def is_port_open(host, port):
     except:
         return False
 
+# [AN] this is depricated
 def installSoftware(dnsname, softwareList):
     """
     SSH's onto the machine at 'dnsname' as root and invokes chef-solo
@@ -143,52 +146,42 @@ def installSoftware(dnsname, softwareList):
     ssh.close()
 
 
-# [AN] change to take another parameter that is just the URL of the pipeline
-# script that gets executed when everything has been installed
-def prepareInstance(image, instancetype, accesskey, secretkey, pkname,
-                    softwareList, pipelineUrl):
+def startAndRun(image, instancetype, accesskey, secretkey, pkname,
+                commandToExecute):
     """
-    Launches an AMI instance using the supplied credentials, installs
-    the webserver. As a final step, the webserver is started and given
-    the list of software to install so the installation process can
-    be seen on a website
+    Launches an AMI instance using the supplied credentials and executes a
+    command in a screen on the remote instance
     """
     # Start up the AMI
-    dnsName = startami(image, instancetype, accesskey, secretkey, pkname)
-    username = get_image_username(image)
+    username, dnsName = startami(image, instancetype, accesskey, secretkey,
+                                 pkname)
 
     # Open an SSH connection onto the machine
-#    instance_ssh_session = ssh_tools.sshConnection(dnsName, SSH_PORT,
-#                                                   username, PRIVATE_KEY_FILE)
+    instance_ssh_session = ssh_tools.sshConnection(dnsName, SSH_PORT,
+                                                   USERNAME, PRIVATE_KEY_FILE)
     
-    # Write a temporary file containing the NODE_JS data to the NODE_JS file
+    # Run the script in a detached screen
+    instance_ssh_session.executeCommandInScreen(commandToExecute)
+    
+    return (username, dnsName)
 
-    # Run the script in a screen and exit
-
-    # SSH onto the machine and run the chef-solo
-    installSoftware(dnsName, softwareList)
-
-    return ((get_image_username(image), dnsName))
-
-# [AN] this needs to be amended to call the method on the server
-def startami(image, instancetype, accesskey, secretkey, pkname):
+def startami(imageName, instancetype, accesskey, secretkey, pkname):
     """
     Launches an AMI instance using the supplied credentials. On success,
     the dns name of the instance is returned. If a failure occurs,
     an exception is raised
     """
-    if not is_valid_instance_type(image, instancetype):
+    if not is_valid_instance_type(imageName, instancetype):
         raise ValueError("Invalid instance type: '%s'" % instancetype)
 
     conn = EC2Connection(accesskey, secretkey)
-    image = conn.get_image(get_image_id(image))
+    image = conn.get_image(get_image_id(imageName))
     reservation = image.run(instance_type=instancetype, key_name=pkname)
     instance = reservation.instances[0]
 
     waitForInstanceToRun(instance)
 
-    # [AN] call script instanceStartup.py
-    return str(instance.dns_name)
+    return (get_image_username(imageName), str(instance.dns_name))
 
 def waitForInstanceToRun(instance):
     """

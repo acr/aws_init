@@ -1,9 +1,9 @@
 aws_init
 
-Purpose: For automatically starting and configuring AWS instances, using
-chef-solo to install arbitrary software packages.
+Purpose: For automatically starting an AWS instance and, optionally, running a
+command in a screen on the instance
 
-Simple use case:
+Starting a server:
 $ cd aws_init
 $ python
 >>> import startami
@@ -12,11 +12,25 @@ $ python
 >>> accesskey = 'blahblahblahmyaccesskey'
 >>> secretkey = 'blahblahblahmysecretkey'
 >>> pkname = 'thenameofmyprivatekey'
->>> softwareList = ['zsh', 'screen', 'git']
->>>
->>> startami.prepareInstance(image, instancetype, accesskey, secretkey,
-... pkname, softwareList)
+>>> 
+>>> startami.startami(image, instancetype, accesskey, secretkey, pkname)
 
-after keeping your fingers crossed and waiting an absurdly long time, the
-method should report back the ('username', 'dnsname') of the server that you
-can use to log into. The software you listed will be automatically installed.
+This will only start up the instance and return a (username, DNSname) tuple for
+remote access to the server.
+
+Starting a server and run a command:
+$ cd aws_init
+$ python
+>>> import startami
+>>> image = 'ubuntu1004x64'
+>>> instancetype = 'm1.large'
+>>> accesskey = 'blahblahblahmyaccesskey'
+>>> secretkey = 'blahblahblahmysecretkey'
+>>> pkname = 'thenameofmyprivatekey'
+>>> command = 'sleep 240'
+>>> 
+>>> startami.startAndRun(image, instancetype, accesskey, secretkey,
+... pkname, command)
+
+This will start an instance and run the command as root in a detached screen.
+A (username, DNSname) tuple for remote access is returned.
