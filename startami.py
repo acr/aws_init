@@ -145,6 +145,13 @@ def installSoftware(dnsname, softwareList):
 
     ssh.close()
 
+# [AN] this is responsible for sending the instance_builder file to the
+# instance and executing the instance_builder script with:
+#  the packages to install (list format?) - another argument here
+#  the URL to the pipeline - another argument here
+# should be like this:
+#def startAndRun(image, instancetype, accesskey, secretkey, pkname,
+#                gitUrlOfInstanceBuilder, softwareList, pipelineUrl):
 def startAndRun(image, instancetype, accesskey, secretkey, pkname,
                 commandToExecute):
     """
