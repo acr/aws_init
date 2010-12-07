@@ -59,17 +59,21 @@ class sshConnection(object):
 
     def executeCommand(self, command, verbose=False):
         """
-        Executes a command over the SSH connection
+        Executes a command over the SSH connection. If verbose
+        is true, this command prints the stdoutput of the remote command
         """
         stdin, stdout, stderr = self._ssh.exec_command(command)
 
         if verbose:
-            print "STDOUT:"
-            for line in stdout.readlines():
+            print "STDOUT"
+        for line in stdout.readlines():
+            if verbose:
                 print line.strip()
 
+        if verbose:
             print "STDERR:"
-            for line in stderr.readlines():
+        for line in stderr.readlines():
+            if verbose:
                 print line.strip()
 
     def executeCommandInScreen(self, command):

@@ -7,14 +7,20 @@ import ssh_tools
 
 # [AN] move these data and related functions to their own file/module
 AVAILABLE_IMAGES = {
-    'ubuntu1004x64': {'imageid': 'ami-04a95e6d', 'supported_instances':
+#    'ubuntu1004x64': {'imageid': 'ami-04a95e6d', 'supported_instances':
+#                          ['m1.large', 'm1.xlarge', 't1.micro', 'm2.xlarge',
+#                           'm2.2xlarge', 'm2.4xlarge', 'c1.medium', 'c1.xlarge',
+#                           'cc1.4xlarge'],
+#                      'username': 'ubuntu',
+    'ubuntu1010x64': {'imageid': 'ami-a0c83ec9', 'supported_instances':
                           ['m1.large', 'm1.xlarge', 't1.micro', 'm2.xlarge',
                            'm2.2xlarge', 'm2.4xlarge', 'c1.medium', 'c1.xlarge',
                            'cc1.4xlarge'],
                       'username': 'ubuntu'
                       }}
-PRIVATE_KEY_FILE = os.path.join(os.path.dirname(__file__), 'auth', 'id_dsa')
-USERNAME = 'root'
+
+ROOT_PRIVATE_KEY = os.path.join(os.path.dirname(__file__), 'auth', 'id_dsa')
+ROOT_USERNAME = 'root'
 NODEJS_PATH = '/etc/chef/node.js'
 CHEF_REPOSITORY_LOCATION = 'http://lyorn.idyll.org/~nolleyal/chef/' \
     'chef-solo.tar.gz'
@@ -100,7 +106,7 @@ def installSoftware(dnsname, softwareList):
     """
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    privkey = paramiko.DSSKey.from_private_key_file(PRIVATE_KEY_FILE)
+    privkey = paramiko.DSSKey.from_private_key_file(ROOT_PRIVATE_KEY)
 
     # Try connecting to port 22 until it is available
     for trial in range(0, NUM_RETRY_ATTEMPTS):
@@ -114,11 +120,11 @@ def installSoftware(dnsname, softwareList):
         else:
             time.sleep(1)
 
-    ssh.connect(dnsname, username=USERNAME, pkey=privkey)
+    ssh.connect(dnsname, username=ROOT_USERNAME, pkey=privkey)
 
     # Write the run list to the '/etc/chef/node.js' file on the Amazon server
     transport = paramiko.Transport((dnsname, 22))
-    transport.connect(username=USERNAME, pkey=privkey)
+    transport.connect(username=ROOT_USERNAME, pkey=privkey)
     sftp = paramiko.SFTPClient.from_transport(transport)
     sfile = sftp.file(NODEJS_PATH, 'w')
     sfile.write(generateRunList(softwareList))
@@ -149,27 +155,38 @@ def installSoftware(dnsname, softwareList):
 # instance and executing the instance_builder script with:
 #  the packages to install (list format?) - another argument here
 #  the URL to the pipeline - another argument here
-# should be like this:
-#def startAndRun(image, instancetype, accesskey, secretkey, pkname,
-#                gitUrlOfInstanceBuilder, softwareList, pipelineUrl):
 def startAndRun(image, instancetype, accesskey, secretkey, pkname,
-                commandToExecute):
+                gitUrlOfInstanceBuilder, softwareList, pipelineUrl,
+                webserverPort):
     """
-    Launches an AMI instance using the supplied credentials and executes a
-    command in a screen on the remote instance
+    Launches an AMI instance using the supplied credentials, then logs onto
+    the machine as root and checks out the latest aws_instance_builder
+    program from 'gitUrlOfInstanceBuilder'
+    The aws_instance_builder.py script from this package is run with arguments:
+     host(dnsName), webserverPort, softwareList, pipelineUrl
     """
     # Start up the AMI
-    username, dnsName = startami(image, instancetype, accesskey, secretkey,
-                                 pkname)
+    instance_username, dnsName = startami(image, instancetype, accesskey,
+                                          secretkey, pkname)
 
-    # Open an SSH connection onto the machine
+    # Open an SSH connection onto the instance
     instance_ssh_session = ssh_tools.sshConnection(dnsName, SSH_PORT,
-                                                   USERNAME, PRIVATE_KEY_FILE)
+                                                   ROOT_USERNAME,
+                                                   ROOT_PRIVATE_KEY)
+
+    # Checkout the aws_instance builder on the instance
+    instance_ssh_session.executeCommand('git clone %s' % \
+                                            gitUrlOfInstanceBuilder)
+
+    # Run the aws_instance_builder in a detached screen
+    # [AN] the command executed should take the arguments:
+    #  host port softwareList pipeLineUrl
+    # change this when the script is updated to take these arguments
+    instance_ssh_session.executeCommandInScreen(
+        'python aws_instance_builder/scripts/start_instance_builder.py ' \
+            '%s %d %s' % (dnsName, webserverPort, softwareList))
     
-    # Run the script in a detached screen
-    instance_ssh_session.executeCommandInScreen(commandToExecute)
-    
-    return (username, dnsName)
+    return (instance_username, dnsName)
 
 def startami(imageName, instancetype, accesskey, secretkey, pkname):
     """
@@ -177,6 +194,9 @@ def startami(imageName, instancetype, accesskey, secretkey, pkname):
     the dns name of the instance is returned. If a failure occurs,
     an exception is raised
     """
+    if not is_valid_image(imageName):
+        raise ValueError("Invalid image '%s'" % imageName)
+
     if not is_valid_instance_type(imageName, instancetype):
         raise ValueError("Invalid instance type: '%s'" % instancetype)
 
