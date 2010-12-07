@@ -7,11 +7,11 @@ import ssh_tools
 
 # [AN] move these data and related functions to their own file/module
 AVAILABLE_IMAGES = {
-#    'ubuntu1004x64': {'imageid': 'ami-04a95e6d', 'supported_instances':
-#                          ['m1.large', 'm1.xlarge', 't1.micro', 'm2.xlarge',
-#                           'm2.2xlarge', 'm2.4xlarge', 'c1.medium', 'c1.xlarge',
-#                           'cc1.4xlarge'],
-#                      'username': 'ubuntu',
+    'ubuntu1004x64': {'imageid': 'ami-e2c93f8b', 'supported_instances':
+                          ['m1.large', 'm1.xlarge', 't1.micro', 'm2.xlarge',
+                           'm2.2xlarge', 'm2.4xlarge', 'c1.medium', 'c1.xlarge',
+                           'cc1.4xlarge'],
+                      'username': 'ubuntu'},
     'ubuntu1010x64': {'imageid': 'ami-a0c83ec9', 'supported_instances':
                           ['m1.large', 'm1.xlarge', 't1.micro', 'm2.xlarge',
                            'm2.2xlarge', 'm2.4xlarge', 'c1.medium', 'c1.xlarge',
