@@ -51,8 +51,14 @@ class sshConnection(object):
             else:
                 time.sleep(1)
 
-        self._ssh.connect(serveraddress, username=username,
-                          pkey=self._privkey)
+        # This usually fails a few times before the ssh server has come up
+        while True:
+            try:
+                self._ssh.connect(serveraddress, username=username,
+                                  pkey=self._privkey)
+                break;
+            except EOFError:
+                time.sleep(1)
 
     def __del__(self):
         self._ssh.close()

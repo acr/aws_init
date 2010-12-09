@@ -18,19 +18,28 @@ $ python
 This will only start up the instance and return a (username, DNSname) tuple for
 remote access to the server.
 
-Starting a server and run a command:
+Starting a server and installing a set of software
 $ cd aws_init
 $ python
 >>> import startami
->>> image = 'ubuntu1004x64'
+>>> image = 'ubuntu1010x64'
 >>> instancetype = 'm1.large'
 >>> accesskey = 'blahblahblahmyaccesskey'
 >>> secretkey = 'blahblahblahmysecretkey'
 >>> pkname = 'thenameofmyprivatekey'
->>> command = 'sleep 240'
+>>> gitUrl = 'git://github.com/kand/aws_instance_builder.git
+>>> softwareList = '[zsh]'
+>>> pipelineUrl = 'http://someurl.com'
+>>> webserverPort = 80
 >>> 
 >>> startami.startAndRun(image, instancetype, accesskey, secretkey,
-... pkname, command)
+...     pkname, gitUrl, softwareList, pipelineUrl, webserverPort)
 
-This will start an instance and run the command as root in a detached screen.
-A (username, DNSname) tuple for remote access is returned.
+This will start an instance, checkout the git repository given, and run the
+webserver script, passing it the softwareList and pipelineUrl as arguments.
+This command is executed remotely over an SSH connection and run in a
+detached screen.A (username, DNSname) tuple for remote access is returned.
+
+Starting a server from the command line:
+$ cd aws_init
+$ python test_start.py ubuntu1010x64 m1.large blahblahblahmyaccesskey blahblahblahmysecretkey thenameofmyprivatekey git://github.com/kand/aws_instance_builder.git [zsh] http://someurl.com 80

@@ -1,4 +1,5 @@
 from boto.ec2.connection import EC2Connection
+import boto
 import time
 import paramiko
 import os
@@ -184,7 +185,8 @@ def startAndRun(image, instancetype, accesskey, secretkey, pkname,
     # change this when the script is updated to take these arguments
     instance_ssh_session.executeCommandInScreen(
         'python aws_instance_builder/scripts/start_instance_builder.py ' \
-            '%s %d %s' % (dnsName, webserverPort, softwareList))
+            '%s %d %s %s' % (dnsName, webserverPort, softwareList,
+                             pipelineUrl))
     
     return (instance_username, dnsName)
 
@@ -218,7 +220,8 @@ def waitForInstanceToRun(instance):
         try:
             instance.update()
             break
-        except EC2ResponseError:
+        except boto.exception.EC2ResponseError:
+            time.sleep(1)
             continue
 
     before = time.time()
