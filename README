@@ -42,4 +42,4 @@ detached screen.A (username, DNSname) tuple for remote access is returned.
 
 Starting a server from the command line:
 $ cd aws_init
-$ python test_start.py ubuntu1010x64 m1.large blahblahblahmyaccesskey blahblahblahmysecretkey thenameofmyprivatekey git://github.com/kand/aws_instance_builder.git [zsh] http://someurl.com 80
+$ python test_start.py ubuntu1010x64 m1.large blahblahblahmyaccesskey blahblahblahmysecretkey git://github.com/kand/aws_instance_builder.git [zsh] http://someurl.com 80

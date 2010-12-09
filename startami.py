@@ -28,6 +28,7 @@ CHEF_REPOSITORY_LOCATION = 'http://lyorn.idyll.org/~nolleyal/chef/' \
 NUM_RETRY_ATTEMPTS = 10
 INIT_SECONDS = 5.0 * 60.0
 SSH_PORT = 22
+SECURITY_GROUP = 'vertex'
 
 def get_available_images():
     """
@@ -87,6 +88,14 @@ def startAndRun(image, instancetype, accesskey, secretkey, pkname,
     The aws_instance_builder.py script from this package is run with arguments:
      host(dnsName), webserverPort, softwareList, pipelineUrl
     """
+
+    # Build up the security group authorizations needed
+    sgAuthorizations = [('tcp', webserverPort, webserverPort, '0.0.0.0/0'),
+                        ('tcp', SSH_PORT, SSH_PORT, '0.0.0.0/0')]
+
+    # Make sure the security group is defined and created properly
+    ensureSecurityGroupExists(accesskey, secretkey, sgAuthorizations)
+    
     # Start up the AMI
     instance_username, dnsName = startami(image, instancetype, accesskey,
                                           secretkey, pkname)
@@ -125,9 +134,11 @@ def startami(imageName, instancetype, accesskey, secretkey, pkname=''):
     reservation = None
     if pkname == None or \
             pkname == '':
-        reservation = image.run(instance_type=instancetype)
+        reservation = image.run(instance_type=instancetype,
+                                security_groups=[SECURITY_GROUP])
     else:
-        reservation = image.run(instance_type=instancetype, key_name=pkname)
+        reservation = image.run(instance_type=instancetype, key_name=pkname,
+                                security_groups=[SECURITY_GROUP])
     instance = reservation.instances[0]
 
     waitForInstanceToRun(instance)
@@ -155,3 +166,21 @@ def waitForInstanceToRun(instance):
             raise RuntimeError("AWS instance failed to start after %f " \
                                    "seconds" % INIT_SECONDS)
         time.sleep(1)
+
+def ensureSecurityGroupExists(accesskey, secretkey, sgAuthorizations):
+    """
+    Creates the security group for running instances under if it doesn't exist
+    and opens the proper ports
+    """
+    conn = EC2Connection(accesskey, secretkey)
+    groups = conn.get_all_security_groups()
+    for group in groups:
+        if str(group.name) == SECURITY_GROUP:
+            return
+
+    # If group not found above, create it and open ports
+    vertexGroup = conn.create_security_group(SECURITY_GROUP,
+                                             SECURITY_GROUP)
+    for sgPort in sgAuthorizations:
+        protocol, fport, tport, cidrip = sgPort
+        vertexGroup.authorize(protocol, fport, tport, cidrip)

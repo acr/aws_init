@@ -4,9 +4,9 @@ import startami
 import sys
 
 if __name__ == '__main__':
-    if len(sys.argv) != 10:
+    if len(sys.argv) != 9:
         print "Usage: %s [image] [instanceType] [accessKey] [secretKey] " \
-            "[pkname] [gitUrlOfInstanceBuilder] [softwareList] [pipelineUrl] " \
+            "[gitUrlOfInstanceBuilder] [softwareList] [pipelineUrl] " \
             "[webserverPort]" % sys.argv[0]
         exit()
 
@@ -14,14 +14,17 @@ if __name__ == '__main__':
     instanceType = sys.argv[2]
     accessKey = sys.argv[3]
     secretKey = sys.argv[4]
-    pkname = sys.argv[5]
-    gitUrlOfInstanceBuilder = sys.argv[6]
-    softwareList = sys.argv[7]
-    pipelineUrl = sys.argv[8]
-    webserverPort = int(sys.argv[9])
+    gitUrlOfInstanceBuilder = sys.argv[5]
+    softwareList = sys.argv[6]
+    pipelineUrl = sys.argv[7]
+    webserverPort = int(sys.argv[8])
 
-    res = startami.startAndRun(image, instanceType, accessKey, secretKey,
-                               pkname, gitUrlOfInstanceBuilder, softwareList,
-                               pipelineUrl, webserverPort)
+    res = startami.startAndRun(image=image, instancetype=instanceType,
+                               accesskey=accessKey, secretkey=secretKey,
+                               pkname='',
+                               gitUrlOfInstanceBuilder=gitUrlOfInstanceBuilder,
+                               softwareList=softwareList,
+                               pipelineUrl=pipelineUrl,
+                               webserverPort=webserverPort)
     
     print str(res)
