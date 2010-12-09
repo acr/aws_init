@@ -152,17 +152,16 @@ def installSoftware(dnsname, softwareList):
 
     ssh.close()
 
-# [AN] this is responsible for sending the instance_builder file to the
-# instance and executing the instance_builder script with:
-#  the packages to install (list format?) - another argument here
-#  the URL to the pipeline - another argument here
 def startAndRun(image, instancetype, accesskey, secretkey, pkname,
                 gitUrlOfInstanceBuilder, softwareList, pipelineUrl,
                 webserverPort):
     """
-    Launches an AMI instance using the supplied credentials, then logs onto
-    the machine as root and checks out the latest aws_instance_builder
-    program from 'gitUrlOfInstanceBuilder'
+    Launches an AMI instance using the supplied credentials. If ssh access
+    is needed, the 'pkname' argument should be filled out with the name of the
+    Amazon-supplied private key. If not, this argument should be ''. After the
+    instance is launched, this method logs onto the instance as root and
+    checks out the latest aws_instance_builder program from
+    'gitUrlOfInstanceBuilder'
     The aws_instance_builder.py script from this package is run with arguments:
      host(dnsName), webserverPort, softwareList, pipelineUrl
     """
@@ -180,9 +179,6 @@ def startAndRun(image, instancetype, accesskey, secretkey, pkname,
                                             gitUrlOfInstanceBuilder)
 
     # Run the aws_instance_builder in a detached screen
-    # [AN] the command executed should take the arguments:
-    #  host port softwareList pipeLineUrl
-    # change this when the script is updated to take these arguments
     instance_ssh_session.executeCommandInScreen(
         'python aws_instance_builder/scripts/start_instance_builder.py ' \
             '%s %d %s %s' % (dnsName, webserverPort, softwareList,
@@ -190,7 +186,7 @@ def startAndRun(image, instancetype, accesskey, secretkey, pkname,
     
     return (instance_username, dnsName)
 
-def startami(imageName, instancetype, accesskey, secretkey, pkname):
+def startami(imageName, instancetype, accesskey, secretkey, pkname=''):
     """
     Launches an AMI instance using the supplied credentials. On success,
     the dns name of the instance is returned. If a failure occurs,
@@ -204,7 +200,12 @@ def startami(imageName, instancetype, accesskey, secretkey, pkname):
 
     conn = EC2Connection(accesskey, secretkey)
     image = conn.get_image(get_image_id(imageName))
-    reservation = image.run(instance_type=instancetype, key_name=pkname)
+    reservation = None
+    if pkname == None or \
+            pkname == '':
+        reservation = image.run(instance_type=instancetype)
+    else:
+        reservation = image.run(instance_type=instancetype, key_name=pkname)
     instance = reservation.instances[0]
 
     waitForInstanceToRun(instance)
